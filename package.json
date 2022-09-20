@@ -5,11 +5,13 @@
   "main": "index.ts",
   "scripts": {
     "dev": "nodemon index.ts",
+    "postinstall": "tsc",
+    "start": "node dist/src/index.js",
     "build": "tsc",
     "test": "jest --watchAll",
-    "dev2": "ts-node index.ts",
+    "simple-dev": "ts-node index.ts",
     "setup": "ts-node tests/fixtures/setup",
-    "heartbeat": "ts-node heartbeat"
+    "heartbeat-test": "ts-node heartbeat"
   },
   "keywords": [],
   "author": "",
