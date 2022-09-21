@@ -25,7 +25,7 @@ app.get('', async (req, res) => {
     try {
         const heartbeats = await getHeartbeats()
         if(heartbeats.length === 0) {
-            return res.status(200).send({info: "No groups found"})
+            return res.status(200).send({info: 'No groups found'})
         }
 
         res.status(200).send(heartbeats)
@@ -38,9 +38,9 @@ app.get('/:group', async (req, res) => {
     try {
         const group = await getGroup(req.params.group)
         if(group.length === 0) {
-            return res.status(200).send({info: "Group not found"})
+            return res.status(200).send({info: 'Group not found'})
         }
-       return res.status(200).send(group)
+        return res.status(200).send(group)
     } catch (e) {
         return res.status(500).send(e)
     }
@@ -49,8 +49,8 @@ app.get('/:group', async (req, res) => {
 app.delete ('/:group/:id', async (req, res) => {
     try {
         const heartbeat = await deleteHeartbeat(req.params.group, req.params.id)
-        if(heartbeat === "") {
-            return res.status(200).send({info: "Registration not found"})
+        if(heartbeat === '') {
+            return res.status(200).send({info: 'Registration not found'})
         }
         return res.status(200).send(heartbeat)
     } catch (e) {

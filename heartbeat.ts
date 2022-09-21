@@ -1,8 +1,9 @@
 import fs from 'fs/promises'
 import * as dotenv from 'dotenv'
 
-dotenv.config({ path: __dirname+'/.env' });
-require('dotenv').config({ path: __dirname+'/.env' })
+dotenv.config({ path: __dirname + '/.env' })
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+require('dotenv').config({ path: __dirname+'../../.env' })
 
 export interface Heartbeat {
     id: string,
@@ -13,8 +14,8 @@ export interface Heartbeat {
 }
 
 export const addHeartbeat = async (group: string, id: string, meta: object) => {
-    let heartbeats: Heartbeat[] = await loadHeartbeats();
-    const duplicateHeartbeat: any = heartbeats.filter((heartbeat: Heartbeat) => heartbeat.group === group)
+    const heartbeats: Heartbeat[] = await loadHeartbeats()
+    const duplicateHeartbeat: any =  heartbeats.filter((heartbeat: Heartbeat) => heartbeat.group === group)
         .find((heartbeat: Heartbeat) => heartbeat.id === id)
 
     if(!duplicateHeartbeat) {
@@ -25,12 +26,11 @@ export const addHeartbeat = async (group: string, id: string, meta: object) => {
             updatedAt: Date.now(),
             meta
         }
-            heartbeats.push(heartbeat)
-            saveHeartbeat(heartbeats)
-    
+        heartbeats.push(heartbeat)
+        saveHeartbeat(heartbeats)
         return heartbeat
     } else {
-        if(duplicateHeartbeat.meta !== "") {
+        if(duplicateHeartbeat.meta !== '') {
             duplicateHeartbeat.meta = meta
         }
         duplicateHeartbeat.updatedAt = Date.now()
@@ -50,12 +50,12 @@ export const getHeartbeats = async () => {
     const heartbeats: Heartbeat = await loadHeartbeats()
     const allGroups: allHeartbeats[] = []
     
-    let groupBy = (data: any, key: any) => {
+    const groupBy = (data: any, key: any) => {
         return data.reduce(function(curr: any, prev: any) {
-          (curr[prev[key]] = curr[prev[key]] || []).push(prev);
-          return curr;
-        }, {});
-      };
+            (curr[prev[key]] = curr[prev[key]] || []).push(prev)
+            return curr
+        }, {})
+    }
 
     
     const groups = groupBy(heartbeats, 'group')
@@ -95,7 +95,7 @@ export const deleteHeartbeat = async (group: string, id: string) => {
         .find((heartbeat: Heartbeat) => heartbeat.id === id)
     
     if(!selectedHeartbeat) {
-       return ""
+        return ''
     }
 
     heartbeats = heartbeats.filter(heartbeat => heartbeat !== selectedHeartbeat)
@@ -106,7 +106,7 @@ export const deleteHeartbeat = async (group: string, id: string) => {
 }
 
 export const saveHeartbeat = async (heartbeats: Heartbeat[]) => {
-    const dataJson = JSON.stringify(heartbeats);    
+    const dataJson = JSON.stringify(heartbeats)    
     try {
         await fs.writeFile('heartbeats.json', dataJson)
     } catch (e) {
@@ -117,7 +117,7 @@ export const saveHeartbeat = async (heartbeats: Heartbeat[]) => {
 
 export const loadHeartbeats = async () => {
     try {
-        const data = await fs.readFile('heartbeats.json');
+        const data = await fs.readFile('heartbeats.json')
         return JSON.parse(data.toString())
     } catch(e) {
         return []
@@ -126,12 +126,14 @@ export const loadHeartbeats = async () => {
 
 
         
-setInterval(async () => {
-    let heartbeats: Heartbeat[] = await loadHeartbeats();
+export const myInterval = setInterval(async () => {
+    let heartbeats: Heartbeat[] = await loadHeartbeats()
     
-    let time = Date.now();
+    const time = Date.now()
     heartbeats = heartbeats.filter(function(item) {
-       return time < item.updatedAt + Number(process.env.EXPIRATION)
-    });
+        return time < item.updatedAt + Number(process.env.EXPIRATION)
+    })
     saveHeartbeat(heartbeats)
-  }, 5000);
+}, 5000)
+
+
