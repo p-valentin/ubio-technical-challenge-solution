@@ -1,14 +1,17 @@
 import request from 'supertest'
 import { app } from '../app'
-import { loadHeartbeats, Heartbeat, myInterval } from '../heartbeat'
+import { loadHeartbeats, Heartbeat } from '../heartbeat'
 import { setup } from './fixtures/setup'
+import { myInterval } from '../heartbeat'
 
 beforeEach(setup)
 afterEach(() => {
-    clearInterval(myInterval)
+    myInterval(false)
 })
+
 describe('test POST endpoint', () => {
     test('Should add a new heartbeat registration', async () => {
+        jest.useFakeTimers()
         const response = await request(app)
             .post('/newHeartbeat/newId')
             .send({'testKey': 'testValue'})
@@ -31,12 +34,12 @@ describe('test POST endpoint', () => {
     })
 
     test('updatedAt should change', async () => {
+        jest.useFakeTimers()
         const initialList = await loadHeartbeats()
         
         const initialSelected: Heartbeat = initialList.filter((hearbeat: Heartbeat) => hearbeat.group === 'testOne')
             .find((heartbeat: Heartbeat) => heartbeat.id === 'test1234')
-        
-        console.log(initialList)
+    
         const initialCreated = initialSelected.createdAt
         expect(initialCreated).not.toBeNull()
     
@@ -106,7 +109,7 @@ describe('test GET endpoint', () => {
         const response = await request(app)
             .get('/notFound')
             .send()
-            .expect(200)
+            .expect(404)
     
         expect(response.body).toMatchObject({info: 'Group not found'})
     })
@@ -128,7 +131,7 @@ describe('test DELETE endpoint', () => {
         const response = await request(app)
             .delete('/abc/notFound')
             .send()
-            .expect(200)
+            .expect(404)
     
         expect(response.body).toMatchObject({info: 'Registration not found'})
     })

@@ -1,5 +1,6 @@
 import fs from 'fs/promises'
 import * as dotenv from 'dotenv'
+import { groupBy, groups, isEmpty } from './utils/utils'
 
 dotenv.config({ path: __dirname + '/.env' })
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -15,8 +16,8 @@ export interface Heartbeat {
 
 export const addHeartbeat = async (group: string, id: string, meta: object) => {
     const heartbeats: Heartbeat[] = await loadHeartbeats()
-    const duplicateHeartbeat: any =  heartbeats.filter((heartbeat: Heartbeat) => heartbeat.group === group)
-        .find((heartbeat: Heartbeat) => heartbeat.id === id)
+    const duplicateHeartbeat: Heartbeat =  heartbeats.filter((heartbeat: Heartbeat) => heartbeat.group === group)
+        .find((heartbeat: Heartbeat) => heartbeat.id === id) as Heartbeat
 
     if(!duplicateHeartbeat) {
         const heartbeat: Heartbeat = {
@@ -27,57 +28,27 @@ export const addHeartbeat = async (group: string, id: string, meta: object) => {
             meta
         }
         heartbeats.push(heartbeat)
-        saveHeartbeat(heartbeats)
+        await saveHeartbeats(heartbeats)
         return heartbeat
     } else {
-        if(duplicateHeartbeat.meta !== '') {
+        
+        if(isEmpty(duplicateHeartbeat.meta as Heartbeat)) {
             duplicateHeartbeat.meta = meta
         }
+
         duplicateHeartbeat.updatedAt = Date.now()
-        saveHeartbeat(heartbeats)      
+        await saveHeartbeats(heartbeats)      
         return duplicateHeartbeat
     }
 }
 
 export const getHeartbeats = async () => {
-    interface allHeartbeats {
-        group: string,
-        instances: number,
-        createdAt: number,
-        lastUpdatedAt: number
-    }
-
-    const heartbeats: Heartbeat = await loadHeartbeats()
-    const allGroups: allHeartbeats[] = []
     
-    const groupBy = (data: any, key: any) => {
-        return data.reduce(function(curr: any, prev: any) {
-            (curr[prev[key]] = curr[prev[key]] || []).push(prev)
-            return curr
-        }, {})
-    }
+    const heartbeats: Heartbeat[] = await loadHeartbeats()
 
-    
-    const groups = groupBy(heartbeats, 'group')
+    const grouped = groupBy(heartbeats, 'group')
 
-
-    Object.entries(groups).forEach((el: any) => {
-        const group: allHeartbeats = {
-            group: el[0],
-            instances: el[1].length,
-            createdAt: el[1].sort((a: any, b: any) => a.createdAt - b.createdAt)[0].createdAt,
-            lastUpdatedAt: el[1].sort((a: any, b: any) => a.updatedAt + b.updatedAt)[0].updatedAt
-        }
-        allGroups.push(group)
-    })
-
-    if(allGroups.length === 0) {
-        return []
-    }
-
-
-    return allGroups
-    
+    return groups(grouped)
 }
 
 export const getGroup = async (group: string) => {
@@ -91,21 +62,21 @@ export const getGroup = async (group: string) => {
 
 export const deleteHeartbeat = async (group: string, id: string) => {
     let heartbeats: Heartbeat[] = await loadHeartbeats() 
-    const selectedHeartbeat: any = heartbeats.filter((hearbeat: Heartbeat) => hearbeat.group === group)
-        .find((heartbeat: Heartbeat) => heartbeat.id === id)
+    const selectedHeartbeat: Heartbeat = heartbeats.filter((hearbeat: Heartbeat) => hearbeat.group === group)
+        .find((heartbeat: Heartbeat) => heartbeat.id === id) as Heartbeat
     
-    if(!selectedHeartbeat) {
-        return ''
+    if(isEmpty(selectedHeartbeat)) {
+        return {}
     }
 
     heartbeats = heartbeats.filter(heartbeat => heartbeat !== selectedHeartbeat)
     
-    saveHeartbeat(heartbeats)
+    await saveHeartbeats(heartbeats)
 
     return heartbeats
 }
 
-export const saveHeartbeat = async (heartbeats: Heartbeat[]) => {
+export const saveHeartbeats = async (heartbeats: Heartbeat[]) => {
     const dataJson = JSON.stringify(heartbeats)    
     try {
         await fs.writeFile('heartbeats.json', dataJson)
@@ -124,16 +95,24 @@ export const loadHeartbeats = async () => {
     } 
 }
 
+export const myInterval = async (run: boolean) => {
+    if(run === false) {
+        return
+    }
 
-        
-export const myInterval = setInterval(async () => {
     let heartbeats: Heartbeat[] = await loadHeartbeats()
-    
+
     const time = Date.now()
-    heartbeats = heartbeats.filter(function(item) {
-        return time < item.updatedAt + Number(process.env.EXPIRATION)
-    })
-    saveHeartbeat(heartbeats)
-}, 5000)
+    heartbeats = heartbeats.filter((item) =>  time < item.updatedAt + Number(process.env.EXPIRATION))
 
+    await saveHeartbeats(heartbeats)
+    
+    setTimeout(async () => {
+        await myInterval(true)
+    }, 2000).unref()
 
+    
+    
+}
+
+myInterval(true)

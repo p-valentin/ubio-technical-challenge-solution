@@ -1,11 +1,11 @@
-import { loadHeartbeats, saveHeartbeat, Heartbeat } from '../../heartbeat'
+import { loadHeartbeats, saveHeartbeats, Heartbeat } from '../../heartbeat'
 
 export const emptyFile = async () => {
     let heartbeats: Heartbeat[] = await loadHeartbeats() 
 
     heartbeats = heartbeats.filter(() => false)
     
-    saveHeartbeat(heartbeats)
+    saveHeartbeats(heartbeats)
    
 }
 
@@ -22,7 +22,7 @@ export const setup = async () => {
         createdAt: Date.now(), 
         updatedAt: Date.now(), 
         meta: {foo: 'meta test'}}]
-    saveHeartbeat(heartbeats)
+    await saveHeartbeats(heartbeats)
 }
 
 setup()
