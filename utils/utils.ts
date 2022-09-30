@@ -1,3 +1,4 @@
+import groupBy from 'lodash.groupby'
 import { Heartbeat } from '../heartbeat'
 
 interface AllHeartbeats {
@@ -8,22 +9,15 @@ interface AllHeartbeats {
 }
 
 interface Groups {
-    [group: string]: string
+    [group: string]: Heartbeat[]
 }
 
+export const group = (data: Heartbeat[]) => groupBy(data, 'group')
 
-export const groupBy = (data: Heartbeat[], key: string)=> {
-    return data.reduce((accum: any, curr: any) => {
-        (accum[curr[key]] = accum[curr[key]] || []).push(accum)
-        return accum
-    }, {})
-}   
-
-export const groups =  (groups: Groups[]) => {
+export const groups =  (groups: Groups) => {
     const allGroups: AllHeartbeats[] = []
-
-    Object.entries(groups).forEach((el: any) => {
-
+    
+    Object.entries(groups).forEach((el: [string, Heartbeat[]]) => {
         const group: AllHeartbeats = {
             group: el[0],
             instances: el[1].length,

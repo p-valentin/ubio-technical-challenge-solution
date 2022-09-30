@@ -1,6 +1,6 @@
 import fs from 'fs/promises'
 import * as dotenv from 'dotenv'
-import { groupBy, groups, isEmpty } from './utils/utils'
+import { group, groups, isEmpty } from './utils/utils'
 
 dotenv.config({ path: __dirname + '/.env' })
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -42,12 +42,9 @@ export const addHeartbeat = async (group: string, id: string, meta: object) => {
     }
 }
 
-export const getHeartbeats = async () => {
-    
+export const getHeartbeats = async () => { 
     const heartbeats: Heartbeat[] = await loadHeartbeats()
-
-    const grouped = groupBy(heartbeats, 'group')
-
+    const grouped = group(heartbeats)
     return groups(grouped)
 }
 
